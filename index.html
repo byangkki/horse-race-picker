@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GallopPick – Interactive Horse Race Raffle</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --panel-bg: rgba(30, 41, 59, 0.85);
+      --accent-green: #10b981;
+      --accent-gold: #f59e0b;
+      --accent-blue: #3b82f6;
+      --accent-red: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HEADER STYLES */
+    header {
+      height: 60px;
+      background: rgba(15, 23, 42, 0.95);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      z-index: 20;
+      backdrop-filter: blur(8px);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-title {
+      font-weight: 800;
+      font-size: 1.1rem;
+      background: linear-gradient(135deg, #f59e0b, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.5px;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      background: #334155;
+      color: white;
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn:hover {
+      background: #475569;
+      transform: translateY(-1px);
+    }
+
+    .btn-start {
+      background: var(--accent-green);
+      border-color: #059669;
+    }
+
+    .btn-start:hover {
+      background: #059669;
+    }
+
+    .btn-end {
+      background: var(--accent-red);
+      border-color: #dc2626;
+    }
+
+    .btn-end:hover {
+      background: #dc2626;
+    }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .timer-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .timer-display {
+      font-family: monospace;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent-gold);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* MAIN CONTAINER */
+    main {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 60px);
+      overflow: hidden;
+    }
+
+    /* SETUP SCREEN */
+    #setup-screen {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    .setup-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 500px;
+      padding: 1.5rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .setup-card h2 {
+      font-size: 1.4rem;
+      color: var(--text-main);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    textarea {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border-color);
+      color: white;
+      border-radius: 6px;
+      padding: 0.75rem;
+      height: 120px;
+      resize: vertical;
+      font-size: 0.9rem;
+    }
+
+    textarea:focus {
+      outline: 1px solid var(--accent-blue);
+    }
+
+    .timer-presets {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+    }
+
+    .btn-preset {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    .btn-preset.active {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+    }
+
+    .btn-begin {
+      background: linear-gradient(135deg, var(--accent-gold), #d97706);
+      color: black;
+      font-weight: 800;
+      font-size: 1.1rem;
+      padding: 0.8rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-begin:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.3);
+    }
+
+    /* GAME CANVAS SCREEN */
+    #race-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* WINNER OVERLAY */
+    #winner-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 30;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    #winner-modal.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .winner-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+      border: 2px solid var(--accent-gold);
+      border-radius: 16px;
+      padding: 2.5rem;
+      text-align: center;
+      box-shadow: 0 0 50px rgba(245, 158, 11, 0.3);
+      transform: scale(0.8);
+      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      max-width: 90%;
+      width: 400px;
+    }
+
+    #winner-modal.show .winner-card {
+      transform: scale(1);
+    }
+
+    .winner-title {
+      font-size: 1.2rem;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 0.5rem;
+    }
+
+    .winner-name {
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: white;
+      margin-bottom: 1.5rem;
+      word-break: break-word;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .btn-reset {
+      background: var(--accent-blue);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    /* ORIENTATION HINT */
+    .orientation-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER CONTAINER -->
+  <header>
+    <div class="header-left">
+      <div class="header-title">GallopPick</div>
+      <div class="header-controls">
+        <button id="btn-start" class="btn btn-start">▶ Start</button>
+        <button id="btn-end" class="btn btn-end">⏹ End</button>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <span class="timer-label">Time:</span>
+      <span id="timer-display" class="timer-display">00:30</span>
+    </div>
+
+    <div class="header-right">
+      <button id="btn-setup" class="btn">⚙ Edit</button>
+    </div>
+  </header>
+
+  <!-- MAIN CANVAS & SETUP CONTAINER -->
+  <main>
+    <!-- SETUP OVERLAY -->
+    <div id="setup-screen">
+      <div class="setup-card">
+        <h2>Derby Setup</h2>
+        <div class="form-group">
+          <label for="horse-names">Entrants (One name per line):</label>
+          <textarea id="horse-names" placeholder="Enter runner names here...">Thunder
+Blaze
+Shadow
+Apollo
+Comet
+Spirit
+Storm
+Star</textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Duration (Seconds):</label>
+          <div class="timer-presets">
+            <button class="btn-preset" data-time="15">15s</button>
+            <button class="btn-preset active" data-time="30">30s</button>
+            <button class="btn-preset" data-time="60">1m</button>
+            <button class="btn-preset" data-time="120">2m</button>
+          </div>
+        </div>
+
+        <div class="orientation-hint">
+          * Desktop view uses landscape view; Mobile view adapts to portrait orientation automatically.
+        </div>
+
+        <button id="btn-begin" class="btn-begin">BEGIN DERBY</button>
+      </div>
+    </div>
+
+    <!-- CANVAS ENGINE -->
+    <canvas id="race-canvas"></canvas>
+
+    <!-- WINNER MODAL -->
+    <div id="winner-modal">
+      <div class="winner-card">
+        <div class="winner-title">🏆 Champion 🏆</div>
+        <div id="winner-name" class="winner-name">GOLDEN CHARIOT</div>
+        <button id="btn-modal-reset" class="btn-reset">Back to Setup</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // --- APP STATE ---
+    const state = {
+      names: [],
+      duration: 30,
+      timeRemaining: 30,
+      isRunning: false,
+      isFinished: false,
+      winner: null,
+      horses: [],
+      cameraX: 0,
+      timerInterval: null,
+      aspectRatio: 'landscape'
+    };
+
+    // --- DOM ELEMENTS ---
+    const canvas = document.getElementById('race-canvas');
+    const ctx = canvas.getContext('2d');
+    const setupScreen = document.getElementById('setup-screen');
+    const winnerModal = document.getElementById('winner-modal');
+    const winnerNameElem = document.getElementById('winner-name');
+    const timerDisplay = document.getElementById('timer-display');
+    const btnStart = document.getElementById('btn-start');
+    const btnEnd = document.getElementById('btn-end');
+    const btnSetup = document.getElementById('btn-setup');
+    const btnBegin = document.getElementById('btn-begin');
+    const btnModalReset = document.getElementById('btn-modal-reset');
+    const textareaNames = document.getElementById('horse-names');
+    const presetBtns = document.querySelectorAll('.btn-preset');
+
+    // --- AUDIO SYSTEM (Web Audio API) ---
+    class SoundSystem {
+      constructor() {
+        this.ctx = null;
+      }
+      init() {
+        if (!this.ctx) {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+      }
+      playGallop() {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(60 + Math.random() * 20, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.08);
+      }
+      playCheer() {
+        if (!this.ctx) return;
+        const bufferSize = this.ctx.sampleRate * 1.5;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 1000;
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 1.5);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        noise.start();
+      }
+    }
+    const audio = new SoundSystem();
+
+    // --- RESIZE & VIEWPORT HANDLING ---
+    function resizeCanvas() {
+      canvas.width = main.clientWidth;
+      canvas.height = main.clientHeight;
+      state.aspectRatio = canvas.width > canvas.height ? 'landscape' : 'portrait';
+    }
+    const main = document.querySelector('main');
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // --- PRESET SELECTION ---
+    presetBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        presetBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.duration = parseInt(btn.dataset.time);
+        state.timeRemaining = state.duration;
+        updateTimerDisplay();
+      });
+    });
+
+    function updateTimerDisplay() {
+      const mins = Math.floor(state.timeRemaining / 60).toString().padStart(2, '0');
+      const secs = (state.timeRemaining % 60).toString().padStart(2, '0');
+      timerDisplay.textContent = `${mins}:${secs}`;
+    }
+
+    // --- HORSE CLASS ---
+    const COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
+
+    class Horse {
+      constructor(name, index, total) {
+        this.name = name;
+        this.index = index;
+        this.total = total;
+        this.color = COLORS[index % COLORS.length];
+        this.x = 0;
+        this.speed = 0;
+        this.targetSpeed = 0;
+        this.animPhase = Math.random() * Math.PI * 2;
+        this.rank = 1;
+        this.finishTime = 0;
+      }
+
+      update(dt, isRunning) {
+        if (isRunning) {
+          if (Math.random() < 0.05) {
+            this.targetSpeed = 200 + Math.random() * 150;
+          }
+          this.speed += (this.targetSpeed - this.speed) * 0.1;
+          this.x += this.speed * dt;
+          this.animPhase += dt * (this.speed / 15);
+
+          if (Math.random() < 0.02) {
+            audio.playGallop();
+          }
+        }
+      }
+
+      draw(ctx, cameraX, viewportWidth, viewportHeight, isPortrait) {
+        const isLandscape = !isPortrait;
+
+        let drawX, drawY, scale;
+
+        if (isLandscape) {
+          const trackHeight = viewportHeight * 0.6;
+          const laneHeight = trackHeight / Math.max(state.horses.length, 1);
+          drawX = (this.x - cameraX) + viewportWidth * 0.2;
+          drawY = (viewportHeight * 0.35) + (this.index * laneHeight);
+          scale = Math.min(laneHeight / 40, 1.2);
+        } else {
+          const trackHeight = viewportHeight * 0.7;
+          const laneHeight = trackHeight / Math.max(state.horses.length, 1);
+          drawX = (this.x - cameraX) + viewportWidth * 0.15;
+          drawY = (viewportHeight * 0.2) + (this.index * laneHeight);
+          scale = Math.min(laneHeight / 35, 1.0);
+        }
+
+        ctx.save();
+        ctx.translate(drawX, drawY);
+        ctx.scale(scale, scale);
+
+        const legAngle = Math.sin(this.animPhase) * 0.6;
+
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        ctx.ellipse(0, 15, 25, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Legs (Back)
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-10, 0); ctx.lineTo(-10 + Math.sin(legAngle) * 15, 15);
+        ctx.moveTo(10, 0); ctx.lineTo(10 - Math.sin(legAngle) * 15, 15);
+        ctx.stroke();
+
+        // Horse Body
+        ctx.fillStyle = '#8d5b4c';
+        ctx.beginPath();
+        ctx.ellipse(0, -5, 22, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Legs (Front)
+        ctx.strokeStyle = '#5c3a2e';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-12, 0); ctx.lineTo(-12 - Math.sin(legAngle) * 15, 15);
+        ctx.moveTo(12, 0); ctx.lineTo(12 + Math.sin(legAngle) * 15, 15);
+        ctx.stroke();
+
+        // Neck & Head
+        ctx.beginPath();
+        ctx.moveTo(12, -8);
+        ctx.lineTo(22, -22);
+        ctx.lineTo(30, -18);
+        ctx.lineTo(20, -2);
+        ctx.closePath();
+        ctx.fill();
+
+        // Jockey Body
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.ellipse(2, -18, 8, 10, 0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Jockey Helmet
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.arc(6, -26, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Name Tag
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+        const nameWidth = ctx.measureText(this.name).width + 12;
+        ctx.beginPath();
+        ctx.roundRect(-nameWidth / 2, -45, nameWidth, 16, 4);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.name, 0, -33);
+
+        ctx.restore();
+      }
+    }
+
+    // --- GAME ENGINE SETUP ---
+    function initRace() {
+      const rawNames = textareaNames.value.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+      state.names = rawNames.length > 0 ? rawNames : ['Runner 1', 'Runner 2'];
+      state.horses = state.names.map((name, i) => new Horse(name, i, state.names.length));
+      state.timeRemaining = state.duration;
+      state.isRunning = false;
+      state.isFinished = false;
+      state.winner = null;
+      state.cameraX = 0;
+      updateTimerDisplay();
+    }
+
+    // --- BUTTON CONTROLS ---
+    btnBegin.addEventListener('click', () => {
+      audio.init();
+      initRace();
+      setupScreen.style.display = 'none';
+    });
+
+    btnSetup.addEventListener('click', () => {
+      state.isRunning = false;
+      clearInterval(state.timerInterval);
+      setupScreen.style.display = 'flex';
+      winnerModal.classList.remove('show');
+    });
+
+    btnStart.addEventListener('click', () => {
+      audio.init();
+      if (state.isFinished) initRace();
+      if (!state.isRunning) {
+        state.isRunning = true;
+        startTimer();
+      }
+    });
+
+    btnEnd.addEventListener('click', () => {
+      endRace();
+    });
+
+    btnModalReset.addEventListener('click', () => {
+      winnerModal.classList.remove('show');
+      setupScreen.style.display = 'flex';
+    });
+
+    function startTimer() {
+      clearInterval(state.timerInterval);
+      state.timerInterval = setInterval(() => {
+        if (state.timeRemaining > 0) {
+          state.timeRemaining--;
+          updateTimerDisplay();
+        } else {
+          endRace();
+        }
+      }, 1000);
+    }
+
+    function endRace() {
+      state.isRunning = false;
+      clearInterval(state.timerInterval);
+      
+      if (state.horses.length > 0) {
+        const sorted = [...state.horses].sort((a, b) => b.x - a.x);
+        state.winner = sorted[0];
+        state.isFinished = true;
+
+        audio.playCheer();
+        setTimeout(() => {
+          winnerNameElem.textContent = state.winner.name;
+          winnerModal.classList.add('show');
+        }, 800);
+      }
+    }
+
+    // --- RENDERING LOOP ---
+    let lastTime = performance.now();
+
+    function render(currentTime) {
+      const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+      lastTime = currentTime;
+
+      const isPortrait = state.aspectRatio === 'portrait';
+
+      // Clear Canvas
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Environment Grass
+      const trackTop = canvas.height * (isPortrait ? 0.15 : 0.25);
+      const trackBottom = canvas.height * (isPortrait ? 0.85 : 0.95);
+
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Dirt Track
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(0, trackTop, canvas.width, trackBottom - trackTop);
+
+      // White Boundary Rails
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0, trackTop); ctx.lineTo(canvas.width, trackTop);
+      ctx.moveTo(0, trackBottom); ctx.lineTo(canvas.width, trackBottom);
+      ctx.stroke();
+
+      // Lane Dividers
+      const laneCount = Math.max(state.horses.length, 1);
+      const laneHeight = (trackBottom - trackTop) / laneCount;
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 1;
+      for (let i = 1; i < laneCount; i++) {
+        ctx.beginPath();
+        ctx.moveTo(0, trackTop + i * laneHeight);
+        ctx.lineTo(canvas.width, trackTop + i * laneHeight);
+        ctx.stroke();
+      }
+
+      // Camera Tracking
+      if (state.horses.length > 0) {
+        const maxX = Math.max(...state.horses.map(h => h.x));
+        state.cameraX += (maxX - state.cameraX) * 0.05;
+      }
+
+      // Render Horses
+      state.horses.forEach(horse => {
+        horse.update(dt, state.isRunning);
+        horse.draw(ctx, state.cameraX, canvas.width, canvas.height, isPortrait);
+      });
+
+      requestAnimationFrame(render);
+    }
+
+    initRace();
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>
